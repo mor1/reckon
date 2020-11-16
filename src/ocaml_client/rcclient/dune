@@ -1,9 +1,9 @@
 (library
  (name rcclient)
  (public_name rcclient)
- (libraries lwt lwt.unix lwt_ppx logs ocaml-protoc)
+ (libraries core async ocaml-protoc ppx_log ocplib-endian)
  (preprocess
-  (pps lwt_ppx ppx_jane)))
+  (pps ppx_jane ppx_log)))
 
 (rule
  (targets
