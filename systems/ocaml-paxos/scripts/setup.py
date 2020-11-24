@@ -19,7 +19,7 @@ def kill(host):
 
 
 def setup(hosts, cgrps, logs, **kwargs):
-    cluster_caps = ",".join(str(i + 1) + ":/data/cap_"+tag(host) for i, host in
+    cluster = ",".join(str(i+1) + ":"+host.IP()+":2380" for i, host in
             enumerate(hosts)
                 )
 
@@ -36,16 +36,20 @@ def setup(hosts, cgrps, logs, **kwargs):
 
     for i, host in enumerate(hosts):
         start_cmd = (
-                    "./systems/ocaml-paxos/bins/ocamlpaxos " +
-                    host.IP()+":2380 " + #Public address
-                    "0.0.0.0:2380 " + #Listen address
-                    "/data/"+tag(host) + " " +
-                    "/data/cli_" + tag(host) + " " +
-                    str(i+1) + " " + 
-                    cluster_caps + " " +
-                    str(0.5) + " " +
-                    str(0.1)
-                    )
+                "systems/ocaml-paxos/bins/ocamlpaxos " +
+                "{node_id} " 
+                "{addrs} " + 
+                "{data_dir} " + 
+                "2379 "+
+                "2380 " + 
+                "5 " + 
+                "0.1 "
+                ).format(
+                        node_id=str(i+1),
+                        addrs=cluster,
+                        data_dir="/data/" + tag(host),
+                        )
+
 
         run(start_cmd, tag(host), host)
         print("Start cmd: " + str(start_cmd))

@@ -58,18 +58,18 @@ ADD src/ocaml_client src/ocaml_client
 ADD src/utils/message.proto src/utils/message.proto 
 RUN cd src/ocaml_client && make install
 
-##- ocaml-paxos ------
-#
-#FROM ocaml_builder as ocaml_paxos_builder
-#ADD systems/ocaml-paxos/Makefile systems/ocaml-paxos/Makefile
-#ADD systems/ocaml-paxos/src systems/ocaml-paxos/src
-#ADD systems/ocaml-paxos/clients systems/ocaml-paxos/clients
-#RUN cd systems/ocaml-paxos && make system
-##Invalidate cache if client library has been updated
-##COPY src/go/src/github.com/Cjen1/rc_go rc_go
-##COPY src/go/src/github.com/Cjen1/rc_go go-deps
-##COPY systems/ocaml-paxos/go go-deps
-#RUN cd systems/ocaml-paxos && make client
+#- ocaml-paxos ------
+
+FROM ocaml_builder as ocaml_paxos_builder
+ADD systems/ocaml-paxos/Makefile systems/ocaml-paxos/Makefile
+ADD systems/ocaml-paxos/src systems/ocaml-paxos/src
+ADD systems/ocaml-paxos/clients systems/ocaml-paxos/clients
+RUN cd systems/ocaml-paxos && make system
+#Invalidate cache if client library has been updated
+COPY src/go/src/github.com/Cjen1/rc_go rc_go
+COPY src/go/src/github.com/Cjen1/rc_go go-deps
+COPY systems/ocaml-paxos/go go-deps
+RUN cd systems/ocaml-paxos && make client
 
 
 #--------------------------------------------------
@@ -79,7 +79,7 @@ ADD . .
 
 #- Install binaries -
 COPY --from=etcd_builder /root/systems/etcd systems/etcd
-#COPY --from=ocaml_paxos_builder /root/systems/ocaml-paxos systems/ocaml-paxos
+COPY --from=ocaml_paxos_builder /root/systems/ocaml-paxos systems/ocaml-paxos
 
 #ADD systems/zookeeper systems/zookeeper
 #RUN make zk_install
@@ -95,5 +95,5 @@ RUN echo 'export PATH=$PATH:~/bins/' >> ~/.bashrc
 
 RUN git clone https://github.com/brendangregg/FlameGraph /results/FlameGraph
 
-RUN apt install strace linux-tools-generic -y
+RUN apt update ; apt install strace linux-tools-generic -y
 

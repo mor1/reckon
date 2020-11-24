@@ -67,12 +67,11 @@ let int32 = Command.Arg_type.create Int32.of_string
 let command =
   Command.async ~summary:"Client Spawner for OcamlPaxos"
     Command.Let_syntax.(
-      let%map_open addrs = anon ("cap_files" %: node_list)
+      let%map_open addrs = anon ("addresses" %: node_list)
       and clientid = anon ("client_id" %: int32)
       and result_pipe = anon ("result_pipe" %: string) in
       fun () ->
         let open Ocamlpaxos in
-        let open Rcclient in
         let global_level = Async.Log.Global.level () in
         let global_output = Async.Log.Global.get_output () in
         List.iter [ Client.logger; Rcclient.logger ] ~f:(fun log ->
