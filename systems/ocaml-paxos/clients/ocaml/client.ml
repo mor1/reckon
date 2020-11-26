@@ -7,51 +7,25 @@ module Client : Rcclient.S with type t = OPC.t = struct
 
   type t = OPC.t
 
-  let put client k v cid start_time =
-    let open M in
-    let st = Unix.gettimeofday () in
-    let%bind err =
-      let open Ocamlpaxos.Types in
-      match%bind OPC.op_write client ~k ~v with
-      | Success -> return ""
-      | ReadSuccess _ -> return ""
-      | Failure -> return "Operation failed"
-    in
-    let end_ = Unix.gettimeofday () in
-    return
-      {
-        response_time = end_ -. st;
-        client_start = st;
-        queue_start = start_time;
-        end_;
-        clientid = cid;
-        optype = "";
-        target = "";
-        err;
-      }
+  let put client k v =
+    let open Ocamlpaxos.Types in
+    match%bind OPC.op_write client ~k ~v with
+    | Success ->
+        Deferred.Result.return ()
+    | ReadSuccess _ ->
+        Deferred.Result.fail @@ `Msg "Got a read from a write operation"
+    | Failure ->
+        Deferred.Result.fail @@ `Msg "Operation failed"
 
-  let get client key cid start_time =
-    let open M in
-    let st = Unix.gettimeofday () in
-    let%bind err =
-      let open Ocamlpaxos.Types in
-      match%bind OPC.op_read client key with
-      | Success -> return ""
-      | ReadSuccess _ -> return ""
-      | Failure -> return "Operation failed"
-    in
-    let end_ = Unix.gettimeofday () in
-    return
-      {
-        response_time = end_ -. st;
-        client_start = st;
-        queue_start = start_time;
-        end_;
-        clientid = cid;
-        optype = "";
-        target = "";
-        err;
-      }
+  let get client key =
+    let open Ocamlpaxos.Types in
+    match%bind OPC.op_read client key with
+    | ReadSuccess _ ->
+        Deferred.Result.return ()
+    | Success ->
+        Deferred.Result.fail @@ `Msg "Didn't get result from read operation"
+    | Failure ->
+        Deferred.Result.fail @@ `Msg "Operation failed"
 end
 
 module Test = Rcclient.Make (Client)
@@ -74,11 +48,11 @@ let command =
         let open Ocamlpaxos in
         let global_level = Async.Log.Global.level () in
         let global_output = Async.Log.Global.get_output () in
-        List.iter [ Client.logger; Rcclient.logger ] ~f:(fun log ->
-            Async.Log.set_level log global_level;
-            Async.Log.set_output log global_output);
+        List.iter [Client.logger; Rcclient.logger] ~f:(fun log ->
+            Async.Log.set_level log global_level ;
+            Async.Log.set_output log global_output) ;
         main addrs clientid result_pipe)
 
 let () =
-  Fmt_tty.setup_std_outputs ();
+  Fmt_tty.setup_std_outputs () ;
   Core.Command.run command

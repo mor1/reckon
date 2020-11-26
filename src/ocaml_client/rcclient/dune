@@ -6,12 +6,7 @@
   (pps ppx_jane ppx_log)))
 
 (rule
- (targets
-  message_types.ml
-  message_types.mli
-  message_pb.ml
-  message_pb.mli
-  )
-  (deps message.proto)
-  (action (run ocaml-protoc -binary -pp -ml_out ./ %{deps}))
-  )
+ (targets message_types.ml message_types.mli message_pb.ml message_pb.mli)
+ (deps message.proto)
+ (action
+  (run ocaml-protoc -binary -pp -ml_out ./ %{deps})))
